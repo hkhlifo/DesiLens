@@ -1,0 +1,51 @@
+// use prisma-8
+
+model Attempt {
+  id           String       @id
+  problemId    String
+  status       String
+  createdAt    TimestamptzString @default(now())
+  submittedAt  TimestamptzString?
+
+  submission   Submission?
+  evaluation   Evaluation?
+}
+
+model Submission {
+  id                String       @id
+  attemptId         String       @unique
+  requirements      String
+  classes           String
+  relationships     String
+  designDecisions   String
+  edgeCases         String
+  createdAt         TimestamptzString @default(now())
+
+  attempt           Attempt      @relation(fields: [attemptId], references: [id])
+}
+
+model Evaluation {
+  id                  String       @id
+  attemptId           String       @unique
+  status              String
+  overallScore        Int
+  summary             String
+  createdAt           TimestamptzString @default(now())
+
+  attempt             Attempt      @relation(fields: [attemptId], references: [id])
+  feedback            Feedback[]
+}
+
+model Feedback {
+  id            String       @id
+  evaluationId  String
+  criterion     String
+  score         Int
+  maxScore      Int
+  evidence      String
+  concern       String
+  suggestion    String
+  confidence    Float
+
+  evaluation    Evaluation   @relation(fields: [evaluationId], references: [id])
+}

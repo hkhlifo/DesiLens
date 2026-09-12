@@ -1,27 +1,40 @@
-export class Problem {
+export class Submission {
   constructor({
     id,
-    title,
-    description,
-    difficulty,
+    attemptId,
     requirements,
+    classes,
+    relationships,
+    designDecisions,
+    edgeCases,
   }) {
     if (!id) {
-      throw new Error("Problem id is required");
+      throw new Error("Submission id is required");
     }
 
-    if (!title) {
-      throw new Error("Problem title is required");
-    }
-
-    if (!requirements || requirements.length === 0) {
-      throw new Error("Problem must have at least one requirement");
+    if (!attemptId) {
+      throw new Error("Attempt id is required");
     }
 
     this.id = id;
-    this.title = title;
-    this.description = description;
-    this.difficulty = difficulty;
-    this.requirements = requirements;
+    this.attemptId = attemptId;
+
+    this.requirements = requirements?.trim() || "";
+    this.classes = classes?.trim() || "";
+    this.relationships = relationships?.trim() || "";
+    this.designDecisions = designDecisions?.trim() || "";
+    this.edgeCases = edgeCases?.trim() || "";
+
+    this.createdAt = new Date();
+  }
+
+  isComplete() {
+    return Boolean(
+      this.requirements &&
+      this.classes &&
+      this.relationships &&
+      this.designDecisions &&
+      this.edgeCases
+    );
   }
 }

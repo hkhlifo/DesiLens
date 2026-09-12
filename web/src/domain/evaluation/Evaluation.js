@@ -1,23 +1,43 @@
-export class Feedback {
+export const EVALUATION_STATUS = {
+  PENDING: "PENDING",
+  COMPLETED: "COMPLETED",
+  FAILED: "FAILED",
+};
+
+export class Evaluation {
   constructor({
-    criterion,
-    score,
-    maxScore,
-    evidence,
-    concern,
-    suggestion,
-    confidence,
+    id,
+    attemptId,
+    overallScore = 0,
+    summary = "",
+    feedback = [],
+    strengths = [],
+    priorityImprovements = [],
   }) {
-    if (!criterion) {
-      throw new Error("Feedback criterion is required");
+    if (!id) {
+      throw new Error("Evaluation id is required");
     }
 
-    this.criterion = criterion;
-    this.score = score;
-    this.maxScore = maxScore;
-    this.evidence = evidence;
-    this.concern = concern;
-    this.suggestion = suggestion;
-    this.confidence = confidence;
+    if (!attemptId) {
+      throw new Error("Attempt id is required");
+    }
+
+    this.id = id;
+    this.attemptId = attemptId;
+    this.status = EVALUATION_STATUS.PENDING;
+    this.overallScore = overallScore;
+    this.summary = summary;
+    this.feedback = feedback;
+    this.strengths = strengths;
+    this.priorityImprovements = priorityImprovements;
+    this.createdAt = new Date();
+  }
+
+  complete() {
+    this.status = EVALUATION_STATUS.COMPLETED;
+  }
+
+  fail() {
+    this.status = EVALUATION_STATUS.FAILED;
   }
 }
