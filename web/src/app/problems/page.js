@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { problems } from "@/data/problems.js";
+import { problems } from "../../data/problems";
 
 export default function ProblemsPage() {
     return (

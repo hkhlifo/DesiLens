@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getProblemById } from "@/data/problems";
+import { getProblemById } from "../../../data/problems";
 import StartAttemptButton from "./StartAttemptButton";
 
 export default async function NewAttemptPage({ searchParams }) {

@@ -9,32 +9,45 @@ export default function AttemptResultPage() {
 
     const [attempt, setAttempt] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        if (!params?.id) {
-            return;
+        async function loadReview() {
+            try {
+                setLoading(true);
+                setError("");
+
+                const response = await fetch(
+                    `/api/attempts/${params.id}`
+                );
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error || "Failed to load review."
+                    );
+                }
+
+                setAttempt({
+                    ...data.attempt,
+                    submission: data.submission,
+                    evaluation: data.evaluation,
+                });
+            } catch (error) {
+                console.error("Failed to load review:", error);
+                setError(
+                    error.message || "Failed to load review."
+                );
+            } finally {
+                setLoading(false);
+            }
         }
 
-        const attemptKey = `designlens-attempt-${params.id}`;
-
-        const stored = localStorage.getItem(attemptKey);
-
-        if (!stored) {
-            setLoading(false);
-            return;
+        if (params?.id) {
+            loadReview();
         }
-
-        try {
-            const currentAttempt = JSON.parse(stored);
-            setAttempt(currentAttempt);
-        } catch (error) {
-            console.error("Failed to read attempt:", error);
-        }
-
-        setLoading(false);
     }, [params?.id]);
-
-    const evaluation = attempt?.evaluation;
 
     function ScoreCard({ score }) {
         return (
@@ -55,9 +68,12 @@ export default function AttemptResultPage() {
     }
 
     function FeedbackCard({ feedback }) {
-        const percentage = Math.round(
-            (feedback.score / feedback.maxScore) * 100
-        );
+        const percentage =
+            feedback.maxScore > 0
+                ? Math.round(
+                    (feedback.score / feedback.maxScore) * 100
+                )
+                : 0;
 
         return (
             <article className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
@@ -76,14 +92,19 @@ export default function AttemptResultPage() {
                         <div className="mt-4 h-1 overflow-hidden rounded-full bg-white/5">
                             <div
                                 className="h-full bg-white/40"
-                                style={{ width: `${percentage}%` }}
+                                style={{
+                                    width: `${percentage}%`,
+                                }}
                             />
                         </div>
                     </div>
 
                     <span className="text-xs text-zinc-600">
                         Confidence{" "}
-                        {Math.round((feedback.confidence ?? 0) * 100)}%
+                        {Math.round(
+                            (feedback.confidence ?? 0) * 100
+                        )}
+                        %
                     </span>
                 </div>
 
@@ -124,7 +145,7 @@ export default function AttemptResultPage() {
     // Loading state
     if (loading) {
         return (
-            <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+            <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-white">
                 <p className="text-zinc-500">
                     Loading your review...
                 </p>
@@ -132,11 +153,48 @@ export default function AttemptResultPage() {
         );
     }
 
+    // API error
+    if (error) {
+        return (
+            <main className="min-h-screen bg-zinc-950 px-6 py-12 text-white">
+                <div className="mx-auto max-w-3xl pt-20 text-center">
+                    <p className="text-sm text-red-400">
+                        REVIEW UNAVAILABLE
+                    </p>
+
+                    <h1 className="mt-3 text-3xl font-semibold">
+                        We couldnt load this review.
+                    </h1>
+
+                    <p className="mt-4 text-zinc-500">
+                        {error}
+                    </p>
+
+                    <div className="mt-8 flex justify-center gap-3">
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="rounded-xl bg-white px-5 py-3 text-sm font-medium text-black hover:bg-zinc-200"
+                        >
+                            Try again
+                        </button>
+
+                        <Link
+                            href="/history"
+                            className="rounded-xl border border-white/10 px-5 py-3 text-sm text-zinc-300 hover:bg-white/5"
+                        >
+                            View history
+                        </Link>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
     // Attempt not found
     if (!attempt) {
         return (
-            <main className="min-h-screen bg-zinc-950 text-white px-6 py-12">
-                <div className="mx-auto max-w-3xl text-center pt-20">
+            <main className="min-h-screen bg-zinc-950 px-6 py-12 text-white">
+                <div className="mx-auto max-w-3xl pt-20 text-center">
                     <p className="text-sm text-zinc-500">
                         ATTEMPT NOT FOUND
                     </p>
@@ -159,8 +217,8 @@ export default function AttemptResultPage() {
     // Evaluation failed
     if (attempt.status === "FAILED") {
         return (
-            <main className="min-h-screen bg-zinc-950 text-white px-6 py-12">
-                <div className="mx-auto max-w-3xl text-center pt-20">
+            <main className="min-h-screen bg-zinc-950 px-6 py-12 text-white">
+                <div className="mx-auto max-w-3xl pt-20 text-center">
                     <p className="text-sm text-red-400">
                         REVIEW FAILED
                     </p>
@@ -184,11 +242,13 @@ export default function AttemptResultPage() {
         );
     }
 
+    const evaluation = attempt.evaluation;
+
     // Evaluation missing
     if (!evaluation) {
         return (
-            <main className="min-h-screen bg-zinc-950 text-white px-6 py-12">
-                <div className="mx-auto max-w-3xl text-center pt-20">
+            <main className="min-h-screen bg-zinc-950 px-6 py-12 text-white">
+                <div className="mx-auto max-w-3xl pt-20 text-center">
                     <p className="text-sm text-amber-400">
                         REVIEW IN PROGRESS
                     </p>
@@ -214,7 +274,7 @@ export default function AttemptResultPage() {
 
     // Main review page
     return (
-        <main className="min-h-screen bg-zinc-950 text-white px-6 py-12">
+        <main className="min-h-screen bg-zinc-950 px-6 py-12 text-white">
             <div className="mx-auto max-w-5xl">
 
                 {/* Header */}
@@ -236,12 +296,14 @@ export default function AttemptResultPage() {
                         </h1>
 
                         <p className="mt-3 max-w-2xl text-zinc-500">
-                            Your submission was reviewed against the DesignLens
-                            evaluation criteria.
+                            Your submission was reviewed against the
+                            DesignLens evaluation criteria.
                         </p>
                     </div>
 
-                    <ScoreCard score={evaluation.overallScore} />
+                    <ScoreCard
+                        score={evaluation.overallScore}
+                    />
                 </div>
 
                 {/* Summary */}
@@ -263,42 +325,46 @@ export default function AttemptResultPage() {
                         </p>
 
                         <div className="mt-4 grid gap-3 md:grid-cols-2">
-                            {evaluation.strengths.map((strength) => (
-                                <div
-                                    key={strength}
-                                    className="rounded-xl border border-emerald-400/10 bg-emerald-400/[0.03] px-4 py-3 text-sm text-zinc-300"
-                                >
-                                    ✓ {strength}
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                )}
-
-                {/* Priority improvements */}
-                {evaluation.priorityImprovements?.length > 0 && (
-                    <section className="mt-8">
-                        <p className="text-xs uppercase tracking-[0.15em] text-zinc-600">
-                            Priority improvements
-                        </p>
-
-                        <div className="mt-4 space-y-3">
-                            {evaluation.priorityImprovements.map(
-                                (improvement, index) => (
+                            {evaluation.strengths.map(
+                                (strength) => (
                                     <div
-                                        key={`${improvement}-${index}`}
-                                        className="rounded-xl border border-amber-400/10 bg-amber-400/[0.03] px-4 py-4 text-sm leading-6 text-zinc-400"
+                                        key={strength}
+                                        className="rounded-xl border border-emerald-400/10 bg-emerald-400/[0.03] px-4 py-3 text-sm text-zinc-300"
                                     >
-                                        <span className="mr-3 text-amber-400">
-                                            {index + 1}
-                                        </span>
-                                        {improvement}
+                                        ✓ {strength}
                                     </div>
                                 )
                             )}
                         </div>
                     </section>
                 )}
+
+                {/* Priority improvements */}
+                {evaluation.priorityImprovements?.length >
+                    0 && (
+                        <section className="mt-8">
+                            <p className="text-xs uppercase tracking-[0.15em] text-zinc-600">
+                                Priority improvements
+                            </p>
+
+                            <div className="mt-4 space-y-3">
+                                {evaluation.priorityImprovements.map(
+                                    (improvement, index) => (
+                                        <div
+                                            key={`${improvement}-${index}`}
+                                            className="rounded-xl border border-amber-400/10 bg-amber-400/[0.03] px-4 py-4 text-sm leading-6 text-zinc-400"
+                                        >
+                                            <span className="mr-3 text-amber-400">
+                                                {index + 1}
+                                            </span>
+
+                                            {improvement}
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        </section>
+                    )}
 
                 {/* Detailed feedback */}
                 <section className="mt-12">
@@ -312,18 +378,21 @@ export default function AttemptResultPage() {
                         </h2>
 
                         <p className="mt-2 text-sm text-zinc-500">
-                            Each criterion includes evidence from your submission,
-                            the concern identified, and a practical suggestion.
+                            Each criterion includes evidence from your
+                            submission, the concern identified, and a
+                            practical suggestion.
                         </p>
                     </div>
 
                     <div className="mt-6 space-y-4">
-                        {evaluation.feedback?.map((feedback) => (
-                            <FeedbackCard
-                                key={feedback.criterion}
-                                feedback={feedback}
-                            />
-                        ))}
+                        {evaluation.feedback?.map(
+                            (feedback) => (
+                                <FeedbackCard
+                                    key={feedback.id || feedback.criterion}
+                                    feedback={feedback}
+                                />
+                            )
+                        )}
                     </div>
                 </section>
 
@@ -338,8 +407,9 @@ export default function AttemptResultPage() {
                     </h2>
 
                     <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-500">
-                        Your design should not only work for todays requirements.
-                        Test how your decisions respond when the requirements change.
+                        Your design should not only work for todays
+                        requirements. Test how your decisions respond when
+                        the requirements change.
                     </p>
 
                     <Link
@@ -357,6 +427,13 @@ export default function AttemptResultPage() {
                         className="rounded-xl border border-white/10 px-5 py-3 text-sm text-zinc-300 hover:bg-white/5"
                     >
                         Review my submission
+                    </Link>
+
+                    <Link
+                        href="/history"
+                        className="rounded-xl border border-white/10 px-5 py-3 text-sm text-zinc-300 hover:bg-white/5"
+                    >
+                        Practice history
                     </Link>
 
                     <Link

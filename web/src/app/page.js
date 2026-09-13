@@ -1,5 +1,8 @@
+import Link from "next/link";
+
 const problems = [
   {
+    id: "parking-lot",
     title: "Parking Lot",
     difficulty: "Medium",
     description:
@@ -7,6 +10,7 @@ const problems = [
     category: "Systems",
   },
   {
+    id: "elevator-system",
     title: "Elevator System",
     difficulty: "Medium",
     description:
@@ -14,6 +18,7 @@ const problems = [
     category: "Systems",
   },
   {
+    id: "vending-machine",
     title: "Vending Machine",
     difficulty: "Easy",
     description:
@@ -21,6 +26,7 @@ const problems = [
     category: "Systems",
   },
   {
+    id: "library-management",
     title: "Library Management",
     difficulty: "Easy",
     description:
@@ -35,12 +41,14 @@ const recentAttempts = [
     score: 78,
     attempt: 2,
     date: "Today",
+    id: "parking-lot",
   },
   {
     problem: "Elevator System",
     score: 71,
     attempt: 1,
     date: "Yesterday",
+    id: "elevator-system",
   },
 ];
 
@@ -61,13 +69,26 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-8 text-sm text-zinc-400">
-            <a href="#problems" className="transition hover:text-white">
+            <Link
+              href="#problems"
+              className="transition hover:text-white"
+            >
               Problems
-            </a>
+            </Link>
 
-            <a href="#history" className="transition hover:text-white">
+            <Link
+              href="/history"
+              className="transition hover:text-white"
+            >
+              History
+            </Link>
+
+            <Link
+              href="#history"
+              className="transition hover:text-white"
+            >
               My Attempts
-            </a>
+            </Link>
 
             <button className="rounded-lg border border-white/10 px-4 py-2 text-zinc-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white">
               Demo Learner
@@ -87,29 +108,31 @@ export default function Home() {
           <h1 className="text-5xl font-semibold leading-[1.08] tracking-tight sm:text-6xl">
             Practice LLD.
             <br />
-            <span className="text-zinc-500">Understand your design.</span>
+            <span className="text-zinc-500">
+              Understand your design.
+            </span>
           </h1>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
-            DesignLens helps you practice real-world Low-Level Design problems
-            and understand why your design works, where it becomes fragile,
-            and how to improve it.
+            DesignLens helps you practice real-world Low-Level Design
+            problems and understand why your design works, where it
+            becomes fragile, and how to improve it.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-4">
-            <a
-              href="#problems"
+            <Link
+              href="/problems"
               className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-zinc-200"
             >
               Start practicing →
-            </a>
+            </Link>
 
-            <a
+            <Link
               href="#how-it-works"
               className="rounded-xl border border-white/10 px-5 py-3 text-sm font-medium text-zinc-300 transition hover:border-white/20 hover:bg-white/5"
             >
               How it works
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -119,14 +142,39 @@ export default function Home() {
           className="mt-20 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 md:grid-cols-4"
         >
           {[
-            ["01", "Design", "Think through the problem and model your solution."],
-            ["02", "Submit", "Explain your responsibilities, relationships and trade-offs."],
-            ["03", "Review", "Get evidence-based feedback instead of a random score."],
-            ["04", "Improve", "Retry and see how your design evolves."],
+            [
+              "01",
+              "Design",
+              "Think through the problem and model your solution.",
+            ],
+            [
+              "02",
+              "Submit",
+              "Explain your responsibilities, relationships and trade-offs.",
+            ],
+            [
+              "03",
+              "Review",
+              "Get evidence-based feedback instead of a random score.",
+            ],
+            [
+              "04",
+              "Improve",
+              "Retry and see how your design evolves.",
+            ],
           ].map(([number, title, description]) => (
-            <div key={number} className="bg-[#0d0d10] p-6">
-              <div className="text-xs font-medium text-zinc-600">{number}</div>
-              <h3 className="mt-8 text-base font-semibold">{title}</h3>
+            <div
+              key={number}
+              className="bg-[#0d0d10] p-6"
+            >
+              <div className="text-xs font-medium text-zinc-600">
+                {number}
+              </div>
+
+              <h3 className="mt-8 text-base font-semibold">
+                {title}
+              </h3>
+
               <p className="mt-2 text-sm leading-6 text-zinc-500">
                 {description}
               </p>
@@ -136,26 +184,36 @@ export default function Home() {
       </section>
 
       {/* Problems */}
-      <section id="problems" className="border-t border-white/10">
+      <section
+        id="problems"
+        className="border-t border-white/10"
+      >
         <div className="mx-auto max-w-7xl px-6 py-16">
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-sm font-medium text-zinc-500">Practice</p>
+              <p className="text-sm font-medium text-zinc-500">
+                Practice
+              </p>
+
               <h2 className="mt-2 text-2xl font-semibold tracking-tight">
                 Choose a design problem
               </h2>
             </div>
 
-            <span className="text-sm text-zinc-600">
-              {problems.length} problems
-            </span>
+            <Link
+              href="/problems"
+              className="text-sm text-zinc-500 transition hover:text-white"
+            >
+              View all →
+            </Link>
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             {problems.map((problem) => (
-              <div
-                key={problem.title}
-                className="group rounded-2xl border border-white/10 bg-[#0d0d10] p-6 transition hover:-translate-y-0.5 hover:border-white/20"
+              <Link
+                key={problem.id}
+                href={`/problems/${problem.id}`}
+                className="group block rounded-2xl border border-white/10 bg-[#0d0d10] p-6 transition hover:-translate-y-0.5 hover:border-white/20"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -177,10 +235,10 @@ export default function Home() {
                   {problem.description}
                 </p>
 
-                <button className="mt-6 text-sm font-medium text-zinc-300 transition group-hover:text-white">
+                <div className="mt-6 text-sm font-medium text-zinc-300 transition group-hover:text-white">
                   Start attempt →
-                </button>
-              </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -192,17 +250,29 @@ export default function Home() {
         className="border-t border-white/10"
       >
         <div className="mx-auto max-w-7xl px-6 py-16">
-          <div>
-            <p className="text-sm font-medium text-zinc-500">Learning loop</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-              Your recent attempts
-            </h2>
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-sm font-medium text-zinc-500">
+                Learning loop
+              </p>
+
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                Your recent attempts
+              </h2>
+            </div>
+
+            <Link
+              href="/history"
+              className="text-sm text-zinc-500 transition hover:text-white"
+            >
+              View history →
+            </Link>
           </div>
 
           <div className="mt-8 overflow-hidden rounded-2xl border border-white/10">
             {recentAttempts.map((attempt, index) => (
               <div
-                key={attempt.problem}
+                key={`${attempt.problem}-${attempt.attempt}`}
                 className={`flex items-center justify-between bg-[#0d0d10] p-5 ${index !== recentAttempts.length - 1
                     ? "border-b border-white/10"
                     : ""
@@ -214,16 +284,22 @@ export default function Home() {
                   </div>
 
                   <div>
-                    <p className="text-sm font-medium">{attempt.problem}</p>
+                    <p className="text-sm font-medium">
+                      {attempt.problem}
+                    </p>
+
                     <p className="mt-1 text-xs text-zinc-600">
                       Attempt #{attempt.attempt} · {attempt.date}
                     </p>
                   </div>
                 </div>
 
-                <button className="text-sm text-zinc-500 transition hover:text-white">
+                <Link
+                  href="/history"
+                  className="text-sm text-zinc-500 transition hover:text-white"
+                >
                   Review →
-                </button>
+                </Link>
               </div>
             ))}
           </div>

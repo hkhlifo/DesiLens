@@ -1,8 +1,11 @@
-import { Attempt } from "@/domain/attempt/Attempt";
-import { Submission } from "@/domain/submission/Submission";
-import { DemoEvaluator } from "@/infrastructure/evaluators/DemoEvaluator";
-// import { db } from "../../../../../prisma/db";
-import { db } from "@/prisma/db";
+import { db } from "../../../../../prisma/db";
+import { Attempt } from "../../../../../domain/attempt/Attempt";
+import { Submission } from "../../../../../domain/submission/Submission";
+import { AIEvaluator } from "../../../../../infrastructure/evaluators/AIEvaluator";
+import { DemoEvaluator } from "../../../../../infrastructure/evaluators/DemoEvaluator";
+import { getProblemById } from "../../../../../data/problems";
+
+export const runtime = "nodejs";
 
 export async function POST(request, { params }) {
   try {
@@ -10,6 +13,11 @@ export async function POST(request, { params }) {
     const body = await request.json();
 
     const submissionData = body?.submission;
+    const problemId = body?.problemId;
+
+    // --------------------------------------------------
+    // 1. Validate request
+    // --------------------------------------------------
 
     if (!submissionData) {
       return Response.json(
@@ -20,8 +28,32 @@ export async function POST(request, { params }) {
       );
     }
 
+    if (!problemId) {
+      return Response.json(
+        {
+          error: "Problem id is required.",
+        },
+        { status: 400 }
+      );
+    }
+
     // --------------------------------------------------
-    // 1. Create domain submission
+    // 2. Find the problem
+    // --------------------------------------------------
+
+    const problem = getProblemById(problemId);
+
+    if (!problem) {
+      return Response.json(
+        {
+          error: "Problem not found.",
+        },
+        { status: 404 }
+      );
+    }
+
+    // --------------------------------------------------
+    // 3. Create domain submission
     // --------------------------------------------------
 
     const submission = new Submission({
@@ -45,12 +77,12 @@ export async function POST(request, { params }) {
     }
 
     // --------------------------------------------------
-    // 2. Create domain attempt
+    // 4. Create domain attempt
     // --------------------------------------------------
 
     const attempt = new Attempt({
       id,
-      problemId: body.problemId || "unknown",
+      problemId,
     });
 
     attempt.attachSubmission(submission.id);
@@ -58,20 +90,61 @@ export async function POST(request, { params }) {
     attempt.startEvaluation();
 
     // --------------------------------------------------
-    // 3. Evaluate the design
+    // 5. Evaluate the design
     // --------------------------------------------------
 
-    const evaluator = new DemoEvaluator();
+    let evaluation;
+    let evaluatorType = "demo";
 
-    const evaluation = await evaluator.evaluate({
-      attemptId: id,
-      submission,
-    });
+    if (process.env.XAI_API_KEY) {
+      try {
+        const evaluator = new AIEvaluator();
+
+        evaluation = await evaluator.evaluate({
+          attemptId: id,
+          problem,
+          submission,
+        });
+
+        evaluatorType = "ai";
+
+        console.log(
+          "Evaluation completed using xAI."
+        );
+      } catch (error) {
+        console.error(
+          "xAI evaluation failed. Falling back to DemoEvaluator:",
+          error
+        );
+
+        const evaluator = new DemoEvaluator();
+
+        evaluation = await evaluator.evaluate({
+          attemptId: id,
+          submission,
+        });
+
+        console.log(
+          "Evaluation completed using DemoEvaluator fallback."
+        );
+      }
+    } else {
+      console.log(
+        "XAI_API_KEY is not configured. Using DemoEvaluator."
+      );
+
+      const evaluator = new DemoEvaluator();
+
+      evaluation = await evaluator.evaluate({
+        attemptId: id,
+        submission,
+      });
+    }
 
     attempt.completeEvaluation(evaluation.id);
 
     // --------------------------------------------------
-    // 4. Persist everything in one transaction
+    // 6. Persist everything in one transaction
     // --------------------------------------------------
 
     await db.transaction(async (tx) => {
@@ -119,11 +192,13 @@ export async function POST(request, { params }) {
     });
 
     // --------------------------------------------------
-    // 5. Return the result to the frontend
+    // 7. Return result to frontend
     // --------------------------------------------------
 
     return Response.json({
       success: true,
+
+      evaluator: evaluatorType,
 
       attempt: {
         id: attempt.id,
@@ -148,11 +223,15 @@ export async function POST(request, { params }) {
       evaluation,
     });
   } catch (error) {
-    console.error("Submission evaluation failed:", error);
+    console.error(
+      "Submission evaluation failed:",
+      error
+    );
 
     return Response.json(
       {
-        error: "Unable to evaluate and save the submission.",
+        error:
+          "Unable to evaluate and save the submission.",
       },
       { status: 500 }
     );

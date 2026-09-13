@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { getChangeTestByProblemId } from "@/data/changeTests";
-import { getProblemById } from "@/data/problems";
+import { useEffect, useState } from "react"; 
+import { getChangeTestByProblemId } from "../../../../data/changeTests";
+import { getProblemById } from "../../../../data/problems";
+
 
 export default function ChangeTestPage() {
     const params = useParams();

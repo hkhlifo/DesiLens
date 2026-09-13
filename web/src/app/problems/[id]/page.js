@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProblemById } from "@/data/problems";
+import { getProblemById } from "../../../data/problems";
 
 export default async function ProblemPage({ params }) {
     const { id } = await params;
